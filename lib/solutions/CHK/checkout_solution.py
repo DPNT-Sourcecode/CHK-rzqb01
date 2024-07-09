@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from collections import Counter
 
 class Offer:
@@ -8,10 +8,10 @@ class Offer:
 
 
 class Item:
-    def __init__(self, sku: str, unit_price: int, offer: Optional[Offer] = None):
+    def __init__(self, sku: str, unit_price: int, offers: Optional[List[Offer]] = None):
         self.sku = sku
         self.unit_price = unit_price
-        self.offer = offer
+        self.offers = offers if offers is not None else []
 
     def calculate_price(self, quantity: int) -> int:
         if self.offer is None:
@@ -23,8 +23,8 @@ class Item:
 
 
 PRICE_TABLE = {
-    "A": Item(sku="A", unit_price=50, offer=Offer(quantity=3, total_price=130)),
-    "B": Item(sku="B", unit_price=30, offer=Offer(quantity=2, total_price=45)),
+    "A": Item(sku="A", unit_price=50, offers=Offer(quantity=3, total_price=130)),
+    "B": Item(sku="B", unit_price=30, offers=Offer(quantity=2, total_price=45)),
     "C": Item(sku="C", unit_price=20),
     "D": Item(sku="D", unit_price=15),
 }
@@ -44,3 +44,4 @@ def checkout(skus: str) -> int:
         total_price += item.calculate_price(quantity)
 
     return total_price
+
