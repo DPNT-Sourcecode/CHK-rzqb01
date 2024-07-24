@@ -56,10 +56,10 @@ def checkout(skus: str) -> int:
         if target_quantity is None or target_quantity < offer.target_quantity:
             continue
 
-        if offer.sku == offer.target_sku and quantity < offer.quantity + target_quantity:
-            continue
-
-        times_offer_can_be_applied = quantity // offer.quantity
+        if offer.sku == offer.target_sku:
+            times_offer_can_be_applied = quantity // (offer.quantity + offer.target_quantity)
+        else:
+            times_offer_can_be_applied = quantity // offer.quantity
         target_items_allowed_free = times_offer_can_be_applied * offer.target_quantity
         updated_target_quantity = target_quantity - target_items_allowed_free
         basket[offer.target_sku] = max(updated_target_quantity, 0)

@@ -68,6 +68,7 @@ class TestCheckout:
             ("FF", 10 * 2),
             ("FFF", 10 * 2),
             ("FFFF", 10 * 2 + 10),
+            ("FFFFF", 10 * 2 + 10 * 2),
         ]
     )
     def test_free_offers_same_item(self, basket, expected):
