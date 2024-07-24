@@ -1,5 +1,6 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+import re
 
 
 @dataclass
@@ -40,6 +41,77 @@ FREE_OFFERS = [
     FreeOffer(sku="E", quantity=2, target_sku="B", target_quantity=1),
     FreeOffer(sku="F", quantity=2, target_sku="F", target_quantity=1),
 ]
+
+RAW_PRICE_TABLE = """\
++------+-------+------------------------+
+| Item | Price | Special offers         |
++------+-------+------------------------+
+| A    | 50    | 3A for 130, 5A for 200 |
+| B    | 30    | 2B for 45              |
+| C    | 20    |                        |
+| D    | 15    |                        |
+| E    | 40    | 2E get one B free      |
+| F    | 10    | 2F get one F free      |
+| G    | 20    |                        |
+| H    | 10    | 5H for 45, 10H for 80  |
+| I    | 35    |                        |
+| J    | 60    |                        |
+| K    | 80    | 2K for 150             |
+| L    | 90    |                        |
+| M    | 15    |                        |
+| N    | 40    | 3N get one M free      |
+| O    | 10    |                        |
+| P    | 50    | 5P for 200             |
+| Q    | 30    | 3Q for 80              |
+| R    | 50    | 3R get one Q free      |
+| S    | 30    |                        |
+| T    | 20    |                        |
+| U    | 40    | 3U get one U free      |
+| V    | 50    | 2V for 90, 3V for 130  |
+| W    | 20    |                        |
+| X    | 90    |                        |
+| Y    | 10    |                        |
+| Z    | 50    |                        |
++------+-------+------------------------+\
+"""
+
+MULTI_OFFER_RE = re.compile(r"(?P<quantity>\d+)(?P<sku>[A-Za-z]) for (?P<total_price>\d+)")
+FREE_OFFER_RE = re.compile(r"(?P<quantity>\d+)(?P<sku>[A-Za-z]) get one (?P<target_sku>[A-Za-z]) free")
+PRICE_TABLE = {}
+MULTI_OFFERS = []
+FREE_OFFERS = []
+
+for row in RAW_PRICE_TABLE.splitlines():
+    if row.startswith("+") or "Special offers" in row or not row.strip():
+        continue
+
+    _, sku, raw_price, raw_offers, _ = [col.strip() for col in row.split("|")]
+    PRICE_TABLE[sku] = Item(sku=sku, unit_price=int(raw_price))
+
+    offers = (o.strip() for o in raw_offers.split(","))
+    offers = (o for o in offers if o)
+    for offer in offers:
+        multi_match = MULTI_OFFER_RE.match(offer)
+        if multi_match:
+            MULTI_OFFERS.append(
+                MultiOffer(
+                    sku=multi_match["sku"], quantity=int(multi_match["quantity"]),
+                    total_price=int(multi_match["total_price"])
+                )
+            )
+            continue
+
+        free_match = FREE_OFFER_RE.match(offer)
+        if free_match:
+            FREE_OFFERS.append(
+                FreeOffer(
+                    sku=free_match["sku"], quantity=int(free_match["quantity"]),
+                    target_sku=free_match["target_sku"], target_quantity=1
+                )
+            )
+            continue
+
+        raise RuntimeError(offer)
 
 
 # noinspection PyUnusedLocal

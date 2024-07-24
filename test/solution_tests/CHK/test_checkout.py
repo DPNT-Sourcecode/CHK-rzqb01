@@ -19,7 +19,7 @@ class TestCheckout:
 
     @pytest.mark.parametrize(
         "basket",
-        ["X", "AX", "ABCDX"]
+        ["x", "Ax", "ABCDx"]
     )
     def test_returns_minus_one_when_item_not_found(self, basket):
         assert checkout(basket) == -1
