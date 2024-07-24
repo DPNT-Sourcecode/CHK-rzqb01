@@ -201,7 +201,7 @@ def checkout(skus: str) -> int:
 
         prices[sku] += current_quantity * item.unit_price
 
-    total_price = sum(prices.values())
+    checkout_price = sum(prices.values())
 
     for offer in GROUP_OFFERS:
         quantities = {sku: basket.get(sku) for sku in offer.skus if basket.get(sku) is not None}
@@ -209,4 +209,20 @@ def checkout(skus: str) -> int:
         if total_quantity < offer.quantity:
             continue
 
-    return total_price
+        times_offer_applied = total_quantity // offer.quantity
+        checkout_price += times_offer_applied * offer.total_price
+
+        quantity_to_remove = times_offer_applied * offer.quantity
+        for sku in offer.skus:
+            if sku not in basket:
+                continue
+
+            quantity = basket[sku]
+            quantity_removed = min(quantity_to_remove, quantity)
+            basket[sku] -= quantity_removed
+            quantity_to_remove -= quantity_removed
+
+            if quantity_to_remove == 0:
+                break
+
+    return checkout_price
