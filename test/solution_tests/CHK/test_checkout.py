@@ -1,51 +1,16 @@
 import pytest
 
-from solutions.CHK.checkout_solution import  Offer, Item, checkout
+from solutions.CHK.checkout_solution import  MultiOffer, Item, checkout
 
 
 @pytest.fixture
 def offer():
-    return Offer(quantity=3, total_price=20)
+    return MultiOffer(quantity=3, total_price=20)
 
 
 @pytest.fixture
 def item():
     return Item(sku="A", unit_price=10)
-
-
-@pytest.fixture
-def item_with_offer(item, offer):
-    item.offer = offer
-    return item
-
-
-class TestItemPrice:
-    @pytest.mark.parametrize(
-        "quantity,expected",
-        [
-            (0, 0),
-            (1, 10),
-            (10, 100)
-        ]
-    )
-    def test_without_offer(self, item, quantity, expected):
-        assert item.calculate_price(quantity) == expected
-
-    @pytest.mark.parametrize(
-        "quantity,expected",
-        [
-            (0, 0),
-            (1, 10),
-            (2, 20),
-            (3, 20),
-            (4, 30),
-            (6, 40),
-            (9, 60),
-            (100, (99/3) * 20 + 10)
-        ]
-    )
-    def test_with_offer(self, item_with_offer, quantity, expected):
-        assert item_with_offer.calculate_price(quantity) == expected
 
 
 class TestCheckout:
@@ -59,9 +24,49 @@ class TestCheckout:
     def test_returns_minus_one_when_item_not_found(self, basket):
         assert checkout(basket) == -1
 
-    def test_checkout_returns_total_value(self):
-        price_a = 130
-        price_b = 45 + 30
-        price_c = 20 * 2
-        price_d = 15
-        assert checkout("AAABBBCCD") == price_a + price_b + price_c + price_d
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
+            ("A", 50),
+            ("AA", 100),
+            ("AB", 80),
+        ]
+    )
+    def test_no_offers(self, basket, expected):
+        assert checkout(basket) == expected
+
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
+            ("A" * 3, 130),
+            ("A" * 4, 130 + 50),
+            ("A" * 5, 200),
+            ("A" * 6, 200 + 50),
+            ("A" * 10, 200 * 2),
+            ("A" * 11, 200 * 2 + 50),
+            ("A" * 13, 200 * 2 + 130),
+        ]
+    )
+    def test_multi_offers(self, basket, expected):
+        assert checkout(basket) == expected
+
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
+            ("EEB", 40 * 2),
+            ("EEEEBB", 40 * 4),
+            ("EEBB", 40 * 2 + 30)
+        ]
+    )
+    def test_free_offers(self, basket, expected):
+        assert checkout(basket) == expected
+
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
+            ("EEBBB", 40 * 2 + 45),
+            ("EEEEBBB", 40 * 4 + 30),
+        ]
+    )
+    def test_combined_offers(self, basket, expected):
+        assert checkout(basket) == expected

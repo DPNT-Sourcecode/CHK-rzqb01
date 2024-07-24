@@ -9,14 +9,14 @@ class Item:
 
 
 @dataclass
-def MultiOffer:
+class MultiOffer:
     sku: str
     quantity: int
     total_price: int
 
 
 @dataclass
-def FreeOffer:
+class FreeOffer:
     sku: str
     quantity: int
     target_sku: str
@@ -30,14 +30,14 @@ PRICE_TABLE = {
     "D": Item(sku="D", unit_price=15),
     "E": Item(sku="E", unit_price=40),
 }
-MULTI_OFFERS = {
-    "A": MultiOffer(sku="A", quantity=3, total_price=130),
-    "A": MultiOffer(sku="A", quantity=5, total_price=200),
-    "B": MultiOffer(sku="B", quantity=2, total_price=45),
-}
-FREE_OFFERS = {
-    "E": OtherItemOffer(sku="E", quantity=2, target_sku="B", target_quantity=1),
-}
+MULTI_OFFERS = [
+    MultiOffer(sku="A", quantity=3, total_price=130),
+    MultiOffer(sku="A", quantity=5, total_price=200),
+    MultiOffer(sku="B", quantity=2, total_price=45),
+]
+FREE_OFFERS = [
+    FreeOffer(sku="E", quantity=2, target_sku="B", target_quantity=1),
+]
 
 
 # noinspection PyUnusedLocal
@@ -45,8 +45,8 @@ FREE_OFFERS = {
 def checkout(skus: str) -> int:
     basket = Counter(skus)
 
-    for sku, offer in FREE_OFFERS.items():
-        quantity = basket.get(sku)
+    for offer in FREE_OFFERS:
+        quantity = basket.get(offer.sku)
         if quantity is None or quantity < offer.quantity:
             continue
 
@@ -54,7 +54,10 @@ def checkout(skus: str) -> int:
         if target_quantity is None or target_quantity < offer.target_quantity:
             continue
 
-        basket[offer.target_sku] -= offer.target_quantity
+        times_offer_can_be_applied = quantity // offer.quantity
+        target_items_allowed_free = times_offer_can_be_applied * offer.target_quantity
+        updated_target_quantity = target_quantity - target_items_allowed_free
+        basket[offer.target_sku] = max(updated_target_quantity, 0)
 
     prices = defaultdict(int)
 
@@ -64,7 +67,7 @@ def checkout(skus: str) -> int:
         if item is None:
             return -1
 
-        multi_offers = [v for v in MULTI_OFFERS.values() if v.sku == sku]
+        multi_offers = [v for v in MULTI_OFFERS if v.sku == sku]
         if not multi_offers:
             prices[sku] = current_quantity * item.unit_price
             continue
@@ -80,4 +83,3 @@ def checkout(skus: str) -> int:
         prices[sku] += current_quantity * item.unit_price
 
     return sum(prices.values())
-
