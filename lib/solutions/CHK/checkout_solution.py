@@ -22,6 +22,7 @@ def FreeOffer:
     target_sku: str
     target_quantity: int
 
+
 PRICE_TABLE = {
     "A": Item(sku="A", unit_price=50),
     "B": Item(sku="B", unit_price=30),
@@ -79,3 +80,4 @@ def checkout(skus: str) -> int:
         prices[sku] += current_quantity * item.unit_price
 
     return sum(prices.values())
+
