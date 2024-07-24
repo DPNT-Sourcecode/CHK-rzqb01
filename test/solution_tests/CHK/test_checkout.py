@@ -64,6 +64,18 @@ class TestCheckout:
     @pytest.mark.parametrize(
         "basket,expected",
         [
+            ("F", 10),
+            ("FF", 10 * 2),
+            ("FFF", 10 * 2),
+            ("FFFF", 10 * 2 + 10),
+        ]
+    )
+    def test_free_offers_same_item(self, basket, expected):
+        assert checkout(basket) == expected
+
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
             ("EEBBB", 40 * 2 + 45),
             ("EEEEBBB", 40 * 4 + 30),
         ]

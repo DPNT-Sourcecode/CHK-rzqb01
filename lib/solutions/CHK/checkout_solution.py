@@ -29,6 +29,7 @@ PRICE_TABLE = {
     "C": Item(sku="C", unit_price=20),
     "D": Item(sku="D", unit_price=15),
     "E": Item(sku="E", unit_price=40),
+    "F": Item(sku="F", unit_price=10),
 }
 MULTI_OFFERS = [
     MultiOffer(sku="A", quantity=3, total_price=130),
@@ -37,6 +38,7 @@ MULTI_OFFERS = [
 ]
 FREE_OFFERS = [
     FreeOffer(sku="E", quantity=2, target_sku="B", target_quantity=1),
+    FreeOffer(sku="F", quantity=2, target_sku="F", target_quantity=1),
 ]
 
 
@@ -52,6 +54,9 @@ def checkout(skus: str) -> int:
 
         target_quantity = basket.get(offer.target_sku)
         if target_quantity is None or target_quantity < offer.target_quantity:
+            continue
+
+        if offer.sku == offer.target_sku and quantity < offer.quantity + target_quantity:
             continue
 
         times_offer_can_be_applied = quantity // offer.quantity
