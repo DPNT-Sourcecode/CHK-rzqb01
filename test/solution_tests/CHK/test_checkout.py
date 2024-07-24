@@ -77,9 +77,20 @@ class TestCheckout:
     @pytest.mark.parametrize(
         "basket,expected",
         [
+            ("ST", 20 + 20),
+            ("STX", 45),
+        ]
+    )
+    def test_group_offers(self, basket, expected):
+        assert checkout(basket) == expected
+
+    @pytest.mark.parametrize(
+        "basket,expected",
+        [
             ("EEBBB", 40 * 2 + 45),
             ("EEEEBBB", 40 * 4 + 30),
         ]
     )
     def test_combined_offers(self, basket, expected):
         assert checkout(basket) == expected
+

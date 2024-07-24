@@ -204,6 +204,7 @@ def checkout(skus: str) -> int:
     checkout_price = sum(prices.values())
 
     for offer in GROUP_OFFERS:
+        import code; code.interact(local=locals())
         quantities = {sku: basket.get(sku) for sku in offer.skus if basket.get(sku) is not None}
         total_quantity = sum(quantities.values())
         if total_quantity < offer.quantity:
@@ -226,3 +227,4 @@ def checkout(skus: str) -> int:
                 break
 
     return checkout_price
+
