@@ -79,6 +79,7 @@ class TestCheckout:
         [
             ("ST", 20 + 20),
             ("STX", 45),
+            ("STXY", 45 + 20),
         ]
     )
     def test_group_offers(self, basket, expected):
@@ -93,4 +94,5 @@ class TestCheckout:
     )
     def test_combined_offers(self, basket, expected):
         assert checkout(basket) == expected
+
 
