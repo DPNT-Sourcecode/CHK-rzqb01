@@ -24,24 +24,6 @@ class FreeOffer:
     target_quantity: int
 
 
-PRICE_TABLE = {
-    "A": Item(sku="A", unit_price=50),
-    "B": Item(sku="B", unit_price=30),
-    "C": Item(sku="C", unit_price=20),
-    "D": Item(sku="D", unit_price=15),
-    "E": Item(sku="E", unit_price=40),
-    "F": Item(sku="F", unit_price=10),
-}
-MULTI_OFFERS = [
-    MultiOffer(sku="A", quantity=3, total_price=130),
-    MultiOffer(sku="A", quantity=5, total_price=200),
-    MultiOffer(sku="B", quantity=2, total_price=45),
-]
-FREE_OFFERS = [
-    FreeOffer(sku="E", quantity=2, target_sku="B", target_quantity=1),
-    FreeOffer(sku="F", quantity=2, target_sku="F", target_quantity=1),
-]
-
 RAW_PRICE_TABLE = """\
 +------+-------+------------------------+
 | Item | Price | Special offers         |
@@ -160,3 +142,4 @@ def checkout(skus: str) -> int:
         prices[sku] += current_quantity * item.unit_price
 
     return sum(prices.values())
+
