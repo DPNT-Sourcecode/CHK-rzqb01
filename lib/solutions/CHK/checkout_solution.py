@@ -24,6 +24,13 @@ class FreeOffer:
     target_quantity: int
 
 
+@dataclass(frozen=True)
+class GroupOffer:
+    skus: frozenset[str]
+    quantity: int
+    total_price: int
+
+
 RAW_PRICE_TABLE = """\
 +------+-------+------------------------+
 | Item | Price | Special offers         |
@@ -56,12 +63,51 @@ RAW_PRICE_TABLE = """\
 | Z    | 50    |                        |
 +------+-------+------------------------+\
 """
+RAW_PRICE_TABLE = """\
++------+-------+---------------------------------+
+| Item | Price | Special offers                  |
++------+-------+---------------------------------+
+| A    | 50    | 3A for 130, 5A for 200          |
+| B    | 30    | 2B for 45                       |
+| C    | 20    |                                 |
+| D    | 15    |                                 |
+| E    | 40    | 2E get one B free               |
+| F    | 10    | 2F get one F free               |
+| G    | 20    |                                 |
+| H    | 10    | 5H for 45, 10H for 80           |
+| I    | 35    |                                 |
+| J    | 60    |                                 |
+| K    | 70    | 2K for 120                      |
+| L    | 90    |                                 |
+| M    | 15    |                                 |
+| N    | 40    | 3N get one M free               |
+| O    | 10    |                                 |
+| P    | 50    | 5P for 200                      |
+| Q    | 30    | 3Q for 80                       |
+| R    | 50    | 3R get one Q free               |
+| S    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| T    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| U    | 40    | 3U get one U free               |
+| V    | 50    | 2V for 90, 3V for 130           |
+| W    | 20    |                                 |
+| X    | 17    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| Y    | 20    | buy any 3 of (S,T,X,Y,Z) for 45 |
+| Z    | 21    | buy any 3 of (S,T,X,Y,Z) for 45 |
++------+-------+---------------------------------+\
+"""
 
-MULTI_OFFER_RE = re.compile(r"(?P<quantity>\d+)(?P<sku>[A-Za-z]) for (?P<total_price>\d+)")
-FREE_OFFER_RE = re.compile(r"(?P<quantity>\d+)(?P<sku>[A-Za-z]) get one (?P<target_sku>[A-Za-z]) free")
+MULTI_OFFER_RE = re.compile(r"^(?P<quantity>\d+)(?P<sku>[A-Za-z]) for (?P<total_price>\d+)$")
+FREE_OFFER_RE = re.compile(
+    r"^(?P<quantity>\d+)(?P<sku>[A-Za-z]) get one (?P<target_sku>[A-Za-z]) free$"
+)
+GROUP_OFFER_RE = re.compile(
+    r"^buy any (?P<quantity>\d+) of \((?P<skus>[A-Z,]+)\) for (?P<total_price>\d+)$"
+)
+
 PRICE_TABLE = {}
 MULTI_OFFERS = []
 FREE_OFFERS = []
+GROUP_OFFERS = set()
 
 for row in RAW_PRICE_TABLE.splitlines():
     if row.startswith("+") or "Special offers" in row or not row.strip():
@@ -70,8 +116,11 @@ for row in RAW_PRICE_TABLE.splitlines():
     _, sku, raw_price, raw_offers, _ = [col.strip() for col in row.split("|")]
     PRICE_TABLE[sku] = Item(sku=sku, unit_price=int(raw_price))
 
-    offers = (o.strip() for o in raw_offers.split(","))
-    offers = (o for o in offers if o)
+    if "buy any" in raw_offers:
+        offers = [raw_offers.strip()]
+    else:
+        offers = [o.strip() for o in raw_offers.split(",")]
+    offers = [o for o in offers if o]
     for offer in offers:
         multi_match = MULTI_OFFER_RE.match(offer)
         if multi_match:
@@ -89,6 +138,17 @@ for row in RAW_PRICE_TABLE.splitlines():
                 FreeOffer(
                     sku=free_match["sku"], quantity=int(free_match["quantity"]),
                     target_sku=free_match["target_sku"], target_quantity=1
+                )
+            )
+            continue
+
+        group_match = GROUP_OFFER_RE.match(offer)
+        if group_match:
+            GROUP_OFFERS.add(
+                GroupOffer(
+                    skus=frozenset(group_match["skus"].split(",")),
+                    quantity=int(group_match["quantity"]),
+                    total_price=int(group_match["total_price"])
                 )
             )
             continue
@@ -141,5 +201,12 @@ def checkout(skus: str) -> int:
 
         prices[sku] += current_quantity * item.unit_price
 
-    return sum(prices.values())
+    total_price = sum(prices.values())
 
+    for offer in GROUP_OFFERS:
+        quantities = {sku: basket.get(sku) for sku in offer.skus if basket.get(sku) is not None}
+        total_quantity = sum(quantities.values())
+        if total_quantity < offer.quantity:
+            continue
+
+    return total_price
