@@ -189,16 +189,16 @@ def checkout(skus: str) -> int:
         times_offer_applied = total_quantity // offer.quantity
         checkout_price += times_offer_applied * offer.total_price
 
-        # import code; code.interact(local=locals())
-
         quantity_to_remove = times_offer_applied * offer.quantity
-        for sku in offer.skus:
-            if sku not in basket:
-                continue
-
-            quantity = basket[sku]
+        items = sorted(
+            [PRICE_TABLE[sku] for sku in offer.skus if basket.get(sku) is not None],
+            key=lambda i: i.unit_price,
+            reverse=True
+        )
+        for item in items:
+            quantity = basket[item.sku]
             quantity_removed = min(quantity_to_remove, quantity)
-            basket[sku] -= quantity_removed
+            basket[item.sku] -= quantity_removed
             quantity_to_remove -= quantity_removed
 
             if quantity_to_remove == 0:
@@ -230,5 +230,3 @@ def checkout(skus: str) -> int:
     checkout_price += sum(prices.values())
 
     return checkout_price
-
-
